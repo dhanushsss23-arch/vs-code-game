@@ -56,9 +56,18 @@ export async function POST(request: NextRequest) {
     }
 
     await createSession(user.id);
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: { id: user.id, email: user.email, displayName: user.displayName },
     });
+    const locale = parsed.data.preferredLocale ?? "EN";
+    response.cookies.set("eduverse_locale", locale === "TA" ? "ta" : "en", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    return response;
   } catch (error) {
     logError("auth.login.failed", error);
     return NextResponse.json({ error: "Login is temporarily unavailable." }, { status: 500 });

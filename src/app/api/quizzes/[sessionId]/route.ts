@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Locale } from "@prisma/client";
 import { getCurrentStudent } from "@/lib/auth/identity";
 import { logError } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
@@ -27,7 +26,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
               select: {
                 points: true,
                 translations: {
-                  where: { locale: identity.user.preferredLocale as Locale },
+                  where: { locale: identity.user.preferredLocale },
                   take: 1,
                   select: { prompt: true, explanation: true, hint: true },
                 },
@@ -36,7 +35,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
                   select: {
                     id: true,
                     translations: {
-                      where: { locale: identity.user.preferredLocale as Locale },
+                      where: { locale: identity.user.preferredLocale },
                       take: 1,
                       select: { text: true },
                     },

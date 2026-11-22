@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CoinTransactionType, Locale, SessionStatus } from "@prisma/client";
+import { CoinTransactionType, SessionStatus } from "@prisma/client";
 import { z } from "zod";
 import { getCurrentStudent } from "@/lib/auth/identity";
 import { isSameOrigin } from "@/lib/auth/request";
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               topicId: true,
               points: true,
               translations: {
-                where: { locale: identity.user.preferredLocale as Locale },
+                where: { locale: identity.user.preferredLocale },
                 take: 1,
                 select: { explanation: true },
               },
@@ -63,9 +63,59 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const selectedOption = sessionQuestion.question.options.find((item) => item.id === parsed.data.selectedOptionId);
       if (!selectedOption) return { error: "That answer does not belong to this question.", status: 400 as const };
 
+      const student = await transaction.studentProfile.findUnique({
+        where: { id: identity.studentId },
+        select: { xp: true, level: true, currentStreak: true, longestStreak: true, lastActiveDate: true },
+      });
+      if (!student) return { error: "Student profile not found.", status: 404 as const };
+
       const isCorrect = selectedOption.isCorrect;
-      const awardedXp = isCorrect ? sessionQuestion.question.points : 0;
-      const earnedCoins = isCorrect ? 1 : 0;
+      let awardedXp = 0;
+      let earnedCoins = 0;
+      if (isCorrect) {
+        const walletBeforeReward = await transaction.wallet.findUnique({
+          where: { studentId: identity.studentId },
+          select: { id: true, balance: true },
+        });
+        if (!walletBeforeReward) return { error: "Wallet not found.", status: 409 as const };
+
+        const idempotencyKey = `first-correct:${sessionQuestion.question.id}`;
+        const rewardClaim = await transaction.coinTransaction.createMany({
+          data: [{
+            walletId: walletBeforeReward.id,
+            type: CoinTransactionType.QUESTION_REWARD,
+            amount: 1,
+            balanceAfter: walletBeforeReward.balance,
+            idempotencyKey,
+            reference: sessionQuestion.question.id,
+          }],
+          skipDuplicates: true,
+        });
+        if (rewardClaim.count === 1) {
+          const wallet = await transaction.wallet.update({
+            where: { id: walletBeforeReward.id },
+            data: { balance: { increment: 1 } },
+            select: { balance: true },
+          });
+          await transaction.coinTransaction.update({
+            where: { walletId_idempotencyKey: { walletId: walletBeforeReward.id, idempotencyKey } },
+            data: { balanceAfter: wallet.balance },
+          });
+          earnedCoins = 1;
+          awardedXp = sessionQuestion.question.points;
+
+          const profileAfterXp = await transaction.studentProfile.update({
+            where: { id: identity.studentId },
+            data: { xp: { increment: awardedXp } },
+            select: { xp: true },
+          });
+          await transaction.studentProfile.update({
+            where: { id: identity.studentId },
+            data: { level: Math.floor(profileAfterXp.xp / 100) + 1 },
+          });
+        }
+      }
+
       const attempt = await transaction.answerAttempt.create({
         data: {
           sessionQuestionId: sessionQuestion.id,
@@ -77,25 +127,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
         select: { id: true },
       });
 
-      if (isCorrect) {
-        const wallet = await transaction.wallet.update({
-          where: { studentId: identity.studentId },
-          data: { balance: { increment: earnedCoins } },
-          select: { id: true, balance: true },
-        });
-        await transaction.coinTransaction.create({
+      const now = new Date();
+      const todayKey = now.toISOString().slice(0, 10);
+      const lastActiveKey = student.lastActiveDate?.toISOString().slice(0, 10);
+      if (lastActiveKey !== todayKey) {
+        const yesterday = new Date(now);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+        const nextStreak = lastActiveKey === yesterday.toISOString().slice(0, 10) ? student.currentStreak + 1 : 1;
+        await transaction.studentProfile.updateMany({
+          where: { id: identity.studentId, lastActiveDate: student.lastActiveDate },
           data: {
-            walletId: wallet.id,
-            type: CoinTransactionType.QUESTION_REWARD,
-            amount: earnedCoins,
-            balanceAfter: wallet.balance,
-            idempotencyKey: `answer:${attempt.id}`,
-            reference: attempt.id,
+            currentStreak: nextStreak,
+            longestStreak: Math.max(student.longestStreak, nextStreak),
+            lastActiveDate: new Date(`${todayKey}T00:00:00.000Z`),
           },
-        });
-        await transaction.studentProfile.update({
-          where: { id: identity.studentId },
-          data: { xp: { increment: awardedXp } },
         });
       }
 

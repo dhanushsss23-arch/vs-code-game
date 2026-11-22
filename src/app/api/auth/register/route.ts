@@ -62,7 +62,15 @@ export async function POST(request: NextRequest) {
     });
 
     await createSession(user.id);
-    return NextResponse.json({ user }, { status: 201 });
+    const response = NextResponse.json({ user }, { status: 201 });
+    response.cookies.set("eduverse_locale", parsed.data.preferredLocale === "TA" ? "ta" : "en", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    return response;
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
       return NextResponse.json({ error: "Unable to create an account with those details." }, { status: 409 });

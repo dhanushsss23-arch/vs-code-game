@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { Difficulty, Locale, QuestionStatus, SessionMode } from "@prisma/client";
+import { Difficulty, QuestionStatus, SessionMode } from "@prisma/client";
 import { z } from "zod";
 import { getCurrentStudent } from "@/lib/auth/identity";
 import { isSameOrigin } from "@/lib/auth/request";
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Choose a topic and difficulty." }, { status: 400 });
 
   try {
-    const locale = identity.user.preferredLocale as Locale;
+    const locale = identity.user.preferredLocale;
     const candidates = await prisma.question.findMany({
       where: {
         topicId: parsed.data.topicId,
