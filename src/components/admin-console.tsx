@@ -91,12 +91,27 @@ export function AdminConsole({ initialQuestions }: Props) {
           <button className="button" disabled={pending}>Grant teacher access<span aria-hidden="true">→</span></button>
         </form>
       </section>
+      <section className="console-panel">
+        <div className="section-heading"><div><p className="eyebrow">REWARDS</p><h2>Add a marketplace item</h2></div></div>
+        <form className="admin-form" onSubmit={(event) => void submitJson(event, "/api/admin/store", "Marketplace item is now available.")}>
+          <label>Item code<input name="sku" required minLength={2} maxLength={40} pattern="[A-Z0-9][A-Z0-9_-]{1,39}" placeholder="STAR_THEME" /></label>
+          <div className="form-grid">
+            <label>Type<select name="kind"><option value="AVATAR">Avatar</option><option value="THEME">Theme</option><option value="COSMETIC">Cosmetic</option><option value="CLUE">Clue</option></select></label>
+            <label>Price in coins<input name="priceCoins" type="number" min="1" max="100000" required /></label>
+          </div>
+          <div className="translation-grid">
+            <fieldset><legend>English</legend><label>Name<input name="nameEn" required minLength={2} maxLength={80} /></label><label>Description<input name="descriptionEn" maxLength={300} /></label></fieldset>
+            <fieldset><legend>தமிழ் · Tamil</legend><label>Name<input name="nameTa" required minLength={2} maxLength={80} /></label><label>Description<input name="descriptionTa" maxLength={300} /></label></fieldset>
+          </div>
+          <button className="button" disabled={pending}>Add to marketplace<span aria-hidden="true">→</span></button>
+        </form>
+      </section>
       <section className="console-panel admin-question-panel">
         <div className="section-heading"><div><p className="eyebrow">CONTENT REVIEW</p><h2>Questions awaiting review</h2></div></div>
         {questions.filter((question) => question.status === "REVIEW").length === 0 ? <div className="empty-panel"><p>No questions are waiting for review.</p></div> : (
           <div className="question-list">
             {questions.filter((question) => question.status === "REVIEW").map((question) => <article className="question-row" key={question.id}>
-              <div><p>{question.translations.find((item) => item.locale === "EN")?.prompt}</p><small>{question.topic.subject} · {question.topic.name} · {question.difficulty.toLowerCase()}</small></div>
+              <div><p>{question.translations.find((item) => item.locale === "EN")?.prompt}</p><small>{question.topic.subject.name} · {question.topic.name} · {question.difficulty.toLowerCase()}</small></div>
               <button className="button button-small" disabled={pending} onClick={() => void publishQuestion(question.id)} type="button">Publish</button>
             </article>)}
           </div>

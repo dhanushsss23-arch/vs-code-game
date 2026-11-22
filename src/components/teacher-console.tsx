@@ -122,7 +122,7 @@ export function TeacherConsole({ isAdmin }: Props) {
         <div className="section-heading"><div><p className="eyebrow">QUESTION BANK</p><h2>Your questions</h2></div></div>
         {loading ? <div className="list-skeleton"><span /><span /><span /></div> : questions.length === 0 ? <div className="empty-panel"><p>No questions have been added yet.</p></div> : (
           <div className="question-list">{questions.map((question) => <article className="question-row" key={question.id}>
-            <div><span className={`status-pill status-${question.status.toLowerCase()}`}>{question.status}</span><p>{question.translations.find((item) => item.locale === "EN")?.prompt}</p><small>{question.topic.subject} · {question.topic.name} · {question.difficulty.toLowerCase()}</small></div>
+            <div><span className={`status-pill status-${question.status.toLowerCase()}`}>{question.status}</span><p>{question.translations.find((item) => item.locale === "EN")?.prompt}</p><small>{question.topic.subject.name} · {question.topic.name} · {question.difficulty.toLowerCase()}</small></div>
             <strong>{question.points} XP</strong>
           </article>)}</div>
         )}

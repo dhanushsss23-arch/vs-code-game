@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Locale, QuestionStatus } from "@prisma/client";
+import { QuestionStatus } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth/session";
 import { LogoutButton } from "@/components/logout-button";
 import { QuizStart } from "@/components/quiz-start";
@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 const copy = {
   EN: {
     welcome: "Ready for your next discovery?", dashboard: "Your learning journey",
-    xp: "EXPERIENCE", level: "LEVEL", streak: "DAY STREAK", coins: "COINS",
+    xp: "EXPERIENCE", level: "LEVEL", streak: "DAY STREAK", coins: "COINS", marketplace: "Marketplace",
     subjects: "Choose your next step", topics: "Topics", noTopics: "No published lessons yet. Your teacher will add learning adventures here.",
     recent: "Recent sessions", noSessions: "Your completed quizzes will appear here.",     transactions: "Coin history", mastery: "Your progress", answered: "answered",
     score: "Score", profile: "Profile", teacher: "Teacher space", admin: "Admin",
@@ -20,7 +20,7 @@ const copy = {
   },
   TA: {
     welcome: "அடுத்த கண்டுபிடிப்புக்குத் தயாரா?", dashboard: "உங்கள் கற்றல் பயணம்",
-    xp: "அனுபவம்", level: "நிலை", streak: "தொடர் நாட்கள்", coins: "நாணயங்கள்",
+    xp: "அனுபவம்", level: "நிலை", streak: "தொடர் நாட்கள்", coins: "நாணயங்கள்", marketplace: "சந்தை",
     subjects: "அடுத்த படியைத் தேர்ந்தெடுக்கவும்", topics: "தலைப்புகள்", noTopics: "வெளியிடப்பட்ட பாடங்கள் இன்னும் இல்லை. ஆசிரியர் பாடங்களைச் சேர்த்ததும் இங்கே காணலாம்.",
     recent: "சமீபத்திய அமர்வுகள்", noSessions: "நீங்கள் முடித்த வினாடி வினாக்கள் இங்கே தோன்றும்.",     transactions: "நாணய வரலாறு", mastery: "உங்கள் முன்னேற்றம்", answered: "பதிலளித்தவை",
     score: "மதிப்பெண்", profile: "சுயவிவரம்", teacher: "ஆசிரியர் பகுதி", admin: "நிர்வாகம்",
@@ -100,6 +100,7 @@ export default async function StudentPage() {
         <nav className="app-nav" aria-label="Student navigation">
           {user.roles.includes("TEACHER") && <Link href="/teacher">{text.teacher}</Link>}
           {user.roles.includes("ADMIN") && <Link href="/admin">{text.admin}</Link>}
+          <Link href="/marketplace">{text.marketplace}</Link>
           <LanguageToggle locale={locale} />
           <ThemeToggle label={text.theme} />
           <LogoutButton />
@@ -158,8 +159,8 @@ export default async function StudentPage() {
           <div className="session-list">
             {student.wallet.transactions.map((transaction) => <article className="session-row" key={transaction.id}>
               <span className="session-icon coin-icon">◈</span>
-              <span className="session-description">{locale === "TA" ? "வினாடி வினா வெகுமதி" : transaction.type.replaceAll("_", " ").toLowerCase()}<small>{new Date(transaction.createdAt).toLocaleDateString(locale === "TA" ? "ta-IN" : "en-US")}</small></span>
-              <strong>+{transaction.amount} · {transaction.balanceAfter}</strong>
+              <span className="session-description">{locale === "TA" ? (transaction.type === "ITEM_PURCHASE" ? "பொருள் வாங்குதல்" : "வினாடி வினா வெகுமதி") : transaction.type.replaceAll("_", " ").toLowerCase()}<small>{new Date(transaction.createdAt).toLocaleDateString(locale === "TA" ? "ta-IN" : "en-US")}</small></span>
+              <strong>{transaction.type === "ITEM_PURCHASE" ? "−" : "+"}{transaction.amount} · {transaction.balanceAfter}</strong>
             </article>)}
           </div>
         )}

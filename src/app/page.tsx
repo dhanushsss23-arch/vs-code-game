@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomePage() {
   return (
@@ -6,6 +7,7 @@ export default function HomePage() {
       <nav className="topbar" aria-label="Main navigation">
         <Link className="brand" href="/">eduverse<span>.</span></Link>
         <div className="nav-actions">
+          <ThemeToggle label="Toggle color theme" />
           <Link className="text-link" href="/login">Log in</Link>
           <Link className="button button-small" href="/register">Start learning</Link>
         </div>

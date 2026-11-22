@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
       }
 
-      const attempt = await transaction.answerAttempt.create({
+      await transaction.answerAttempt.create({
         data: {
           sessionQuestionId: sessionQuestion.id,
           selectedOptionId: selectedOption.id,
@@ -124,7 +124,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
           awardedXp,
           elapsedMilliseconds: parsed.data.elapsedMilliseconds,
         },
-        select: { id: true },
       });
 
       const now = new Date();

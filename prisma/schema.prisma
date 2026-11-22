@@ -450,8 +450,21 @@ model StoreItem {
   enabled     Boolean         @default(false)
   metadata    Json?
   inventory   InventoryItem[]
+  translations StoreItemTranslation[]
 
   @@index([kind, enabled, priceCoins])
+}
+
+model StoreItemTranslation {
+  id          String    @id @default(cuid())
+  storeItemId String
+  locale      Locale
+  name        String
+  description String?
+  storeItem   StoreItem @relation(fields: [storeItemId], references: [id], onDelete: Cascade)
+
+  @@unique([storeItemId, locale])
+  @@index([locale])
 }
 
 model InventoryItem {

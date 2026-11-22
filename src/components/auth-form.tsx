@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type Props = { mode: "login" | "register" };
 
@@ -51,6 +52,12 @@ export function AuthForm({ mode }: Props) {
   const text = copy[language];
   const isRegister = mode === "register";
 
+  function toggleLanguage() {
+    const nextLanguage = language === "en" ? "ta" : "en";
+    document.documentElement.lang = nextLanguage;
+    setLanguage(nextLanguage);
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -88,9 +95,10 @@ export function AuthForm({ mode }: Props) {
     <main className="auth-page">
       <div className="auth-top">
         <Link className="brand" href="/">eduverse<span>.</span></Link>
-        <button className="language-toggle" type="button" onClick={() => setLanguage(language === "en" ? "ta" : "en")} aria-label="Change language">
-          {language === "en" ? "தமிழ்" : "English"}
-        </button>
+        <div className="auth-actions">
+          <ThemeToggle label="Toggle color theme" />
+          <button className="language-toggle" type="button" onClick={toggleLanguage} aria-label="Change language">{language === "en" ? "தமிழ்" : "English"}</button>
+        </div>
       </div>
       <section className="auth-card" aria-labelledby="auth-title">
         <Link className="auth-back" href="/">← {text.home}</Link>
